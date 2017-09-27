@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class StartStopTest extends TestBase {
-    private static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(1);
+    private static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(3);
     private static int port;
     private static File data;
     private static KVService storage;
@@ -54,19 +54,21 @@ public class StartStopTest extends TestBase {
         try {
             // Should not respond before start
             status();
-        } catch (SocketTimeoutException e) {
+        } catch (HttpHostConnectException e) {  //SocketTimeoutException e
             // Do nothing
         }
     }
 
     @Test
     public void start() throws Exception {
+        storage = KVServiceFactory.create(port, data);
         storage.start();
         assertEquals(200, status());
     }
 
     @Test
     public void stop() throws Exception {
+        storage = KVServiceFactory.create(port, data);
         storage.stop();
         try {
             // Should not respond after stop
