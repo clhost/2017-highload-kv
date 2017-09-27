@@ -9,7 +9,7 @@ import java.io.IOException;
  * @author Vadim Tsesko <mail@incubos.org>
  */
 public final class Server {
-    private static final int PORT = 8080;
+    private static final int PORT = 8081;
 
     private Server() {
         // Not instantiable

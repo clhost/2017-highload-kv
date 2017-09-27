@@ -8,11 +8,20 @@ plugins {
 
 repositories {
     jcenter()
+    mavenCentral()
 }
 
 dependencies {
     // Annotations for better code documentation
     compile("com.intellij:annotations:12.0")
+
+    // Jetty
+    compile("org.eclipse.jetty:jetty-server:9.4.6.v20170531")
+    compile("org.eclipse.jetty:jetty-webapp:9.4.6.v20170531")
+
+    // Logging
+    compile("org.apache.logging.log4j:log4j-api:2.8.2")
+    compile("org.apache.logging.log4j:log4j-core:2.8.2")
 
     // JUnit test framework
     testCompile("junit:junit:4.12")
