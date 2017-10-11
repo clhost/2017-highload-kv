@@ -6,6 +6,7 @@ import ru.mail.polis.clhost.server.JettyServer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * Constructs {@link KVService} instances.
@@ -22,14 +23,13 @@ final class KVServiceFactory {
     /**
      * Construct a storage instance.
      *
-     * @param port port to bind HTTP server to
-     * @param data local disk folder to persist the data to
+     * @param port     port to bind HTTP server to
+     * @param data     local disk folder to persist the data to
      * @return a storage instance
      */
     @NotNull
     static KVService create(
-            final int port,
-            @NotNull final File data) throws IOException {
+            final int port, @NotNull final File data) throws IOException {
 
         if (Runtime.getRuntime().maxMemory() > MAX_HEAP) {
             throw new IllegalStateException("The heap is too big. Consider setting Xmx.");
