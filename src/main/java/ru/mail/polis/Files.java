@@ -38,10 +38,10 @@ public final class Files {
                                                @NotNull final byte[] value) throws IOException {
         File file = new File(path + File.separator + name);
 
-        FileOutputStream fileOutputStream = new FileOutputStream(file.getAbsolutePath());
-        fileOutputStream.write(value);
-        fileOutputStream.flush();
-        fileOutputStream.close();
+        try (FileOutputStream fileOutputStream = new FileOutputStream(file.getAbsolutePath())) {
+            fileOutputStream.write(value);
+            fileOutputStream.flush();
+        }
     }
 
     public static void deleteFileByName(@NotNull final String path, @NotNull final String name) throws IOException {
@@ -52,11 +52,12 @@ public final class Files {
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public static byte[] getValueFromFile(@NotNull final String path, @NotNull final String name) throws IOException {
         File file = new File(path + File.separator + name);
-        FileInputStream fileInputStream = new FileInputStream(file.getAbsolutePath());
 
-        byte[] bytes = new byte[fileInputStream.available()];
-        fileInputStream.read(bytes, 0, fileInputStream.available());
-        fileInputStream.close();
+        byte[] bytes;
+        try (FileInputStream fileInputStream = new FileInputStream(file.getAbsolutePath())) {
+            bytes = new byte[fileInputStream.available()];
+            fileInputStream.read(bytes, 0, fileInputStream.available());
+        }
 
         return bytes;
     }

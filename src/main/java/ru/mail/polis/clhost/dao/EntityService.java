@@ -19,7 +19,7 @@ public class EntityService implements EntityDao {
     }
 
     @Override
-    public synchronized void delete(@NotNull String key) {
+    public void delete(@NotNull String key) {
         try {
             Files.deleteFileByName(TEMP_DIRECTORY, key);
         } catch (IOException e) {
@@ -28,7 +28,7 @@ public class EntityService implements EntityDao {
     }
 
     @Override
-    public synchronized void upsert(@NotNull String key, @NotNull byte[] value) {
+    public void upsert(@NotNull String key, @NotNull byte[] value) {
         try {
             Files.createFileAndWriteValue(TEMP_DIRECTORY, key, value);
         } catch (IOException e) {
@@ -37,7 +37,7 @@ public class EntityService implements EntityDao {
     }
 
     @Override
-    public synchronized byte[] get(@NotNull String key) throws IllegalArgumentException {
+    public byte[] get(@NotNull String key) throws IllegalArgumentException {
         byte[] bytes = null;
         try {
             bytes = Files.getValueFromFile(TEMP_DIRECTORY, key);

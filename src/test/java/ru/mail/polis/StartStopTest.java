@@ -61,14 +61,12 @@ public class StartStopTest extends TestBase {
 
     @Test
     public void start() throws Exception {
-        storage = KVServiceFactory.create(port, data);
         storage.start();
         assertEquals(200, status());
     }
 
     @Test
     public void stop() throws Exception {
-        storage = KVServiceFactory.create(port, data);
         storage.stop();
         try {
             // Should not respond after stop
