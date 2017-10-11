@@ -33,7 +33,7 @@ public class SingleNodeTest extends TestBase {
         final int port = randomPort();
         data = Files.createTempDirectory();
         endpoint = endpoint(port);
-        storage = KVServiceFactory.create(port, data, Collections.singleton(endpoint));
+        storage = KVServiceFactory.create(port, data);
         storage.start();
     }
 

@@ -54,7 +54,7 @@ public class StartStopTest extends TestBase {
 
     @Test
     public void create() throws Exception {
-        storage = KVServiceFactory.create(port, data, endpoints);
+        storage = KVServiceFactory.create(port, data);
         try {
             // Should not respond before start
             status();
