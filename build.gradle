@@ -1,0 +1,41 @@
+group 'com.clhost'
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+repositories {
+    jcenter()
+    mavenCentral()
+}
+
+dependencies {
+    // Annotations for better code documentation
+    compile 'com.intellij:annotations:12.0'
+
+    // Netty
+    compile group: 'io.netty', name: 'netty-all', version: '4.1.16.Final'
+
+    // Logging
+    compile 'org.apache.logging.log4j:log4j-api:2.8.2'
+    compile 'org.apache.logging.log4j:log4j-core:2.8.2'
+
+    // JUnit test framework
+    testCompile 'junit:junit:4.12'
+
+    // HTTP client for unit tests
+    testCompile 'org.apache.httpcomponents:fluent-hc:4.5.3'
+}
+
+/*tasks {
+    "test"(Test::class) {
+        maxHeapSize = "1g"
+    }
+}*/
+
+/*application {
+    // Define the main class for the application
+    mainClassName = "ru.mail.polis.Server"
+
+    // And limit Xmx
+    applicationDefaultJvmArgs = listOf("-Xmx1g")
+}*/
