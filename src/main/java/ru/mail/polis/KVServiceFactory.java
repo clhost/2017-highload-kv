@@ -1,12 +1,11 @@
 package ru.mail.polis;
 
 import org.jetbrains.annotations.NotNull;
-import ru.mail.polis.clhost.dao.EntityService;
-import ru.mail.polis.clhost.server.JettyServer;
+import ru.mail.polis.netty.dao.EntityService;
+import ru.mail.polis.netty.server.NettyHttpServer;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
 
 /**
  * Constructs {@link KVService} instances.
@@ -47,6 +46,6 @@ final class KVServiceFactory {
             throw new IllegalArgumentException("Path is not a directory: " + data);
         }
 
-        return new JettyServer(port, new EntityService(data));
+        return new NettyHttpServer(port, new EntityService(data));
     }
 }

@@ -10,7 +10,7 @@ import java.util.Collections;
  * @author Vadim Tsesko <mail@incubos.org>
  */
 public final class Server {
-    private static final int PORT = 8081;
+    private static final int PORT = 1337;
 
     private Server() {
         // Not instantiable

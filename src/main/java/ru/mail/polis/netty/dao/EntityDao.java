@@ -1,4 +1,4 @@
-package ru.mail.polis.clhost.dao;
+package ru.mail.polis.netty.dao;
 
 import org.jetbrains.annotations.NotNull;
 
