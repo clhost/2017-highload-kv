@@ -24,6 +24,11 @@ dependencies {
 
     // HTTP client for unit tests
     testCompile 'org.apache.httpcomponents:fluent-hc:4.5.3'
+
+    // https://mvnrepository.com/artifact/com.google.guava/guava
+    //testCompile group: 'com.google.guava', name: 'guava', version: '11.0.2'
+    testCompile 'com.google.guava:guava:23.1-jre'
+
 }
 
 /*tasks {

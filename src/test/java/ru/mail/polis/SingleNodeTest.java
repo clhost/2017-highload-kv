@@ -33,7 +33,7 @@ public class SingleNodeTest extends TestBase {
         final int port = randomPort();
         data = Files.createTempDirectory();
         endpoint = endpoint(port);
-        storage = KVServiceFactory.create(port, data);
+        storage = KVServiceFactory.create(port, data, Collections.singleton(endpoint));
         storage.start();
     }
 
@@ -61,7 +61,6 @@ public class SingleNodeTest extends TestBase {
             @NotNull final byte[] data) throws IOException {
         return Request.Put(url(key)).bodyByteArray(data).execute().returnResponse();
     }
-
 
     @Test
     public void emptyKey() throws Exception {
@@ -116,6 +115,17 @@ public class SingleNodeTest extends TestBase {
         final HttpResponse response = get(key);
         assertEquals(200, response.getStatusLine().getStatusCode());
         assertArrayEquals(value, payloadOf(response));
+    }
+
+    @Test
+    public void t() throws Exception {
+        final String key1 = randomKey();
+        final byte[] value1 = randomValue();
+        //assertEquals(201, upsert(key1, value1).getStatusLine().getStatusCode());
+        for (int i = 0; i < 1; i++) {
+            assertEquals(201, upsert(randomKey(), randomValue()).getStatusLine().getStatusCode());
+            //assertArrayEquals(value1, payloadOf(get(key1)));
+        }
     }
 
     @Test
