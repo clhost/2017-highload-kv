@@ -23,7 +23,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
 
     // HTTP client for unit tests
-    testCompile 'org.apache.httpcomponents:fluent-hc:4.5.3'
+    compile 'org.apache.httpcomponents:fluent-hc:4.5.3'
 
     // https://mvnrepository.com/artifact/com.google.guava/guava
     //testCompile group: 'com.google.guava', name: 'guava', version: '11.0.2'

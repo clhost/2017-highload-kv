@@ -20,7 +20,7 @@ public final class Files {
         // Don't instantiate
     }
 
-    static File createTempDirectory() throws IOException {
+    public static File createTempDirectory() throws IOException {
         final File data = java.nio.file.Files.createTempDirectory(TEMP_PREFIX).toFile();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {

@@ -50,6 +50,6 @@ final class KVServiceFactory {
             throw new IllegalArgumentException("Path is not a directory: " + data);
         }
 
-        return new NettyHttpServer(port, new EntityService(data), topology);
+        return new NettyHttpServer(data.getAbsolutePath(), port, new EntityService(data), topology);
     }
 }

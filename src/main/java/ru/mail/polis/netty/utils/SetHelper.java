@@ -18,7 +18,6 @@ public class SetHelper {
                 }
             } else {
                 // like residue class
-                //iterator.remove();
                 iterator = set.iterator();
                 i--;
             }

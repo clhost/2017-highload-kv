@@ -1,6 +1,7 @@
 package ru.mail.polis.netty.services;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -11,27 +12,32 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.netty.utils.UriDecoder;
 
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+
 @SuppressWarnings("FieldCanBeLocal")
 public class NodeService implements INodeService {
     private Logger logger = LogManager.getLogger(NodeService.class);
     private ArrayList<FullHttpResponse> preparedResult = new ArrayList<>();
     private Connector connector;
+    private Scheduler scheduler;
 
-    public NodeService() {
+    public NodeService(Scheduler scheduler) {
         connector = new Connector(this);
-        //System.out.println("instanced");
+        this.scheduler = scheduler;
     }
 
     @Override
     public ArrayList<FullHttpResponse> delete(@NotNull String key, @NotNull final Set<String> nodes) {
         preparedResult.clear();
         for (String node : nodes) {
+            HttpRequest request = null;
             try {
                 URI uri = new URI(node);
                 String host = uri.getHost();
@@ -39,11 +45,13 @@ public class NodeService implements INodeService {
 
                 // prepare request
                 URI requestUri = new URI(node + "/v0/node?id=" + key);
-                HttpRequest request = buildBasicRequest(HttpMethod.DELETE, requestUri);
+                request = buildBasicRequest(HttpMethod.DELETE, requestUri);
 
                 connector.connect(host, port, request);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
+            } catch (URISyntaxException | ConnectException e) {
+                scheduler.save(request);
+                preparedResult.add(buildResponse504());
+                connector.shutdownGracefully();
             }
         }
         return preparedResult;
@@ -54,6 +62,7 @@ public class NodeService implements INodeService {
                                               @NotNull byte[] value, @NotNull final Set<String> nodes) {
         preparedResult.clear();
         for (String node : nodes) {
+            HttpRequest request = null;
             try {
                 URI uri = new URI(node);
                 String host = uri.getHost();
@@ -61,11 +70,13 @@ public class NodeService implements INodeService {
 
                 // prepare request
                 URI requestUri = new URI(node + "/v0/node?id=" + key);
-                HttpRequest request = buildBasicRequest(HttpMethod.PUT, requestUri);
+                request = buildBasicRequest(HttpMethod.PUT, requestUri);
 
                 connector.connect(host, port, request);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
+            } catch (URISyntaxException | ConnectException e) {
+                scheduler.save(request);
+                preparedResult.add(buildResponse504());
+                connector.shutdownGracefully();
             }
         }
         return preparedResult;
@@ -81,14 +92,15 @@ public class NodeService implements INodeService {
                 String host = uri.getHost();
                 int port = uri.getPort();
 
-                redirectedRequest.setUri(redirectedRequest.uri()
+                redirectedRequest.setUri(node + redirectedRequest.uri()
                                         .replace("entity", "node"));
+                System.out.println(redirectedRequest.uri());
 
-                System.out.println("#1"); //тестил
                 connector.connect(host, port, redirectedRequest.retain());
-                System.out.println("#2");
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
+            } catch (URISyntaxException | ConnectException e) {
+                scheduler.save(redirectedRequest);
+                preparedResult.add(buildResponse504());
+                connector.shutdownGracefully();
             }
         }
         return preparedResult;
@@ -107,12 +119,27 @@ public class NodeService implements INodeService {
                 URI requestUri = new URI(node + "/v0/node?id=" + key);
                 HttpRequest request = buildBasicRequest(HttpMethod.GET, requestUri);
 
+
                 connector.connect(host, port, request);
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
+            } catch (URISyntaxException | ConnectException e) {
+                preparedResult.add(buildResponse504());
+                connector.shutdownGracefully();
             }
         }
         return preparedResult;
+    }
+
+    private FullHttpResponse buildResponse504() {
+        byte[] bytes = "Gateway timeout.".getBytes();
+
+        FullHttpResponse response = new DefaultFullHttpResponse(
+                HTTP_1_1, HttpResponseStatus.GATEWAY_TIMEOUT,
+                Unpooled.copiedBuffer(bytes)
+        );
+        response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
+        response.headers().set(HttpHeaderNames.CONTENT_LENGTH, bytes.length);
+
+        return response;
     }
 
     private HttpRequest buildBasicRequest(HttpMethod method, URI uri) {
@@ -130,10 +157,6 @@ public class NodeService implements INodeService {
         return preparedResult;
     }
 
-    public void closeOperation() {
-        connector.forceShutdown();
-    }
-
     class Connector {
         private Bootstrap b;
         private EventLoopGroup group;
@@ -141,22 +164,17 @@ public class NodeService implements INodeService {
         private ChannelFuture cf;
 
         Connector(NodeService instance) {
-            System.out.println("Connector has been created.");
             this.instance = instance;
         }
 
-        void forceShutdown() {
+        void shutdownGracefully() {
+            b = null;
             group.shutdownGracefully();
         }
 
         void connect(@NotNull final String host,
                      final int port,
-                     @NotNull final HttpRequest request) {
-            if (b != null & group != null) {
-                b = null;
-                group.shutdownGracefully();
-                group = null;
-            }
+                     @NotNull final HttpRequest request) throws ConnectTimeoutException {
             try {
                 b = new Bootstrap();
                 b.channel(NioSocketChannel.class)
@@ -179,6 +197,10 @@ public class NodeService implements INodeService {
                 cf.channel().writeAndFlush(request);
                 cf.channel().closeFuture().sync();
             } catch (InterruptedException e) {
+                b = null;
+                group.shutdownGracefully();
+            } finally {
+                b = null;
                 group.shutdownGracefully();
             }
         }
