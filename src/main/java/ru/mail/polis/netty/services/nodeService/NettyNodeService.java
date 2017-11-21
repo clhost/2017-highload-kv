@@ -1,7 +1,6 @@
-package ru.mail.polis.netty.services;
+package ru.mail.polis.netty.services.nodeService;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -11,12 +10,12 @@ import io.netty.handler.codec.http.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import ru.mail.polis.netty.services.schedule.Scheduler;
 
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Set;
 
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -59,7 +58,8 @@ public class NettyNodeService implements INodeService {
 
     @Override
     public ArrayList<FullHttpResponse> upsert(@NotNull String key,
-                                              @NotNull byte[] value, @NotNull final Set<String> nodes) {
+                                              @NotNull byte[] value, @NotNull final Set<String> nodes,
+                                              @NotNull HttpHeaders headers) {
         preparedResult.clear();
         for (String node : nodes) {
             FullHttpRequest request = null;
@@ -72,6 +72,8 @@ public class NettyNodeService implements INodeService {
                 URI requestUri = new URI(node + "/v0/node?id=" + key);
                 request = (FullHttpRequest) buildBasicRequest(HttpMethod.PUT, requestUri);
                 request.content().writeBytes(value);
+
+                request.headers().set(headers);
                 request.headers().set(HttpHeaderNames.CONTENT_LENGTH, value.length);
 
                 connector.connect(host, port, request);

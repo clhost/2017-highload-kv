@@ -1,4 +1,4 @@
-package ru.mail.polis.netty.services;
+package ru.mail.polis.netty.services.nodeService;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;

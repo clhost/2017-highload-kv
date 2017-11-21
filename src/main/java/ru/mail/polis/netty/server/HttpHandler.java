@@ -10,15 +10,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.netty.dao.EntityDao;
-import ru.mail.polis.netty.services.INodeService;
-import ru.mail.polis.netty.services.NettyNodeService;
-import ru.mail.polis.netty.services.Scheduler;
+import ru.mail.polis.netty.services.nodeService.INodeService;
+import ru.mail.polis.netty.services.nodeService.NettyNodeService;
+import ru.mail.polis.netty.services.schedule.Scheduler;
+import ru.mail.polis.netty.services.ttl.TTLSaver;
 import ru.mail.polis.netty.utils.SetHelper;
 import ru.mail.polis.netty.utils.UriDecoder;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Set;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
@@ -30,13 +31,15 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
     private Set<String> topology;
     private int currentPort;
     private Scheduler scheduler;
+    private TTLSaver ttlSaver;
     private Logger logger = LogManager.getLogger(HttpHandler.class);
 
-    HttpHandler(EntityDao dao, Set<String> topology, int port, Scheduler scheduler) {
+    HttpHandler(EntityDao dao, Set<String> topology, int port, Scheduler scheduler, TTLSaver ttlSaver) {
         this.currentPort = port;
         this.dao = dao;
         this.topology = topology;
         this.scheduler = scheduler;
+        this.ttlSaver = ttlSaver;
         nodeService = new NettyNodeService(scheduler);
     }
 
@@ -104,6 +107,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                         entityProduce(uri, ctx, (key, ctx0, ack0, from0) -> {
                             int serverPoint = findPosInitialNode(key);
                             boolean isContained = false;
+
                             Set<String> subSet = SetHelper.subSet(topology, serverPoint, from0);
 
                             Iterator<String> it = subSet.iterator();
@@ -119,12 +123,14 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                             * Здесь был редирект
                             * ArrayList<FullHttpResponse> responses = nodeService.upsert(request, subSet);
                             */
-                            ByteBuf buffer = (request).content().retain();
+                            ttlSaver.accept(request);
+
+                            ByteBuf buffer = request.content().retain();
                             byte[] bytes0 = new byte[buffer.readableBytes()];
                             while (buffer.isReadable()) {
                                 bytes0[buffer.readerIndex()] = buffer.readByte();
                             }
-                            ArrayList<FullHttpResponse> responses = nodeService.upsert(key, bytes0, subSet);
+                            ArrayList<FullHttpResponse> responses = nodeService.upsert(key, bytes0, subSet, request.headers());
 
                             /* Кладем данные на текущую ноду, если она содержится в выборке*/
                             if (isContained) {
@@ -188,6 +194,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                         });
                         break;
                     case "PUT":
+                        ttlSaver.accept(request);
                         nodeProduce(uri, ctx, (key, ctx0, ack, from) -> {
                             ByteBuf buf = request.content().resetReaderIndex();
                             byte[] bytes = new byte[buf.readableBytes()];

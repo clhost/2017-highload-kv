@@ -1,4 +1,4 @@
-package ru.mail.polis.netty.services;
+package ru.mail.polis.netty.services.schedule;
 
 
 import io.netty.buffer.ByteBuf;
@@ -37,10 +37,8 @@ public class Scheduler {
         /*
         * Позже можно реализовать так, чтобы взаимоисключающие PUT и DELETE не выполнялись
         * */
-        //if (!(deletionSet.isEmpty() | putSet.isEmpty())) {
-            checkDelete();
-            checkPut();
-        //}
+        checkDelete();
+        checkPut();
     }
 
     private void checkDelete() {
