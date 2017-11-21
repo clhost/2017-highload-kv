@@ -66,6 +66,8 @@ public class NettyHttpServer implements KVService{
 
             cf = serverBootstrap.bind(port).sync();
 
+            // т.к. операция bind выполняется асинхронно, ответы на awake могут прийти раньше
+            Thread.sleep(1000); // wait to bind
             awake();
             ttlSaver.restoreState();
             scheduler.restoreState();
