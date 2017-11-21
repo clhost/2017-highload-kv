@@ -1,7 +1,9 @@
 package ru.mail.polis;
 
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.message.BasicHeader;
 import org.jetbrains.annotations.NotNull;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -12,6 +14,8 @@ import org.junit.rules.Timeout;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
+import java.util.Scanner;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -26,7 +30,7 @@ public class SingleNodeTest extends TestBase {
     private static String endpoint;
     private static KVService storage;
     @Rule
-    public final Timeout globalTimeout = Timeout.seconds(3);
+    public final Timeout globalTimeout = Timeout.seconds(15); // для ttltest
 
     @BeforeClass
     public static void beforeAll() throws IOException, InterruptedException {
@@ -60,6 +64,34 @@ public class SingleNodeTest extends TestBase {
             @NotNull final String key,
             @NotNull final byte[] data) throws IOException {
         return Request.Put(url(key)).bodyByteArray(data).execute().returnResponse();
+    }
+
+    @Test
+    public void ttltest() throws Exception {
+        // should increase globalTimeout
+        Request
+                .Put(url("1213"))
+                .addHeader(new BasicHeader(HttpHeaders.EXPIRES,
+                           new Date(System.currentTimeMillis() + 3 * 1000).toString()))
+                .bodyByteArray(randomValue())
+                .execute()
+                .returnResponse()
+                .getStatusLine()
+                .getStatusCode();
+        Request
+                .Put(url("1214"))
+                .addHeader(new BasicHeader(HttpHeaders.EXPIRES,
+                           new Date(System.currentTimeMillis() + 3 * 1000).toString()))
+                .bodyByteArray(randomValue())
+                .execute()
+                .returnResponse()
+                .getStatusLine()
+                .getStatusCode();
+        upsert();
+        Thread.sleep(5 * 1000);
+
+        assertEquals(404, get("1213").getStatusLine().getStatusCode());
+        assertEquals(404, get("1214").getStatusLine().getStatusCode());
     }
 
     @Test
@@ -117,16 +149,6 @@ public class SingleNodeTest extends TestBase {
         assertArrayEquals(value, payloadOf(response));
     }
 
-    @Test
-    public void t() throws Exception {
-        final String key1 = randomKey();
-        final byte[] value1 = randomValue();
-        //assertEquals(201, upsert(key1, value1).getStatusLine().getStatusCode());
-        for (int i = 0; i < 1; i++) {
-            assertEquals(201, upsert(randomKey(), randomValue()).getStatusLine().getStatusCode());
-            //assertArrayEquals(value1, payloadOf(get(key1)));
-        }
-    }
 
     @Test
     public void lifecycle2keys() throws Exception {

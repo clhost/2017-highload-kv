@@ -1,11 +1,14 @@
 package ru.mail.polis;
 
 import com.google.common.collect.Iterators;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.message.BasicHeader;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -24,12 +27,6 @@ abstract class ClusterTestBase extends TestBase {
             final int ack,
             final int from) {
         final String endpoint = Iterators.get(endpoints.iterator(), node);
-        /*String endpoint = null;
-        if (node == 0) endpoint = endpoints.iterator().next();
-        if (node == 1) {
-            endpoints.iterator().next();
-            endpoint = endpoints.iterator().next();
-        }*/
         return endpoint + "/v0/entity?id=" + id + "&replicas=" + ack + "/" + from;
     }
 
@@ -56,5 +53,17 @@ abstract class ClusterTestBase extends TestBase {
             final int ack,
             final int from) throws IOException {
         return Request.Put(url(node, key, ack, from)).bodyByteArray(data).execute().returnResponse();
+    }
+
+    HttpResponse upsertWithTtl(
+            final int node,
+            @NotNull final String key,
+            @NotNull final byte[] data,
+            final int ack,
+            final int from) throws IOException {
+        return Request.Put(url(node, key, ack, from)).bodyByteArray(data)
+                .addHeader(new BasicHeader(HttpHeaders.EXPIRES,
+                           new Date(System.currentTimeMillis() + 5 * 1000).toString()))
+                .execute().returnResponse();
     }
 }
