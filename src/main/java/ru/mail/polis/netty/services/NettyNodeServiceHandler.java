@@ -1,17 +1,16 @@
 package ru.mail.polis.netty.services;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ConnectTimeoutException;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpResponse;
 
 
-public class NodeServiceHandler extends SimpleChannelInboundHandler<HttpObject> {
-    private NodeService service;
+public class NettyNodeServiceHandler extends SimpleChannelInboundHandler<HttpObject> {
+    private NettyNodeService service;
 
-    NodeServiceHandler(NodeService service) {
+    NettyNodeServiceHandler(NettyNodeService service) {
         this.service = service;
     }
 

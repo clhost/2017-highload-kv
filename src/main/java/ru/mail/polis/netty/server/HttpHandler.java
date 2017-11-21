@@ -10,7 +10,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.netty.dao.EntityDao;
-import ru.mail.polis.netty.services.NodeService;
+import ru.mail.polis.netty.services.INodeService;
+import ru.mail.polis.netty.services.NettyNodeService;
 import ru.mail.polis.netty.services.Scheduler;
 import ru.mail.polis.netty.utils.SetHelper;
 import ru.mail.polis.netty.utils.UriDecoder;
@@ -25,7 +26,7 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public class HttpHandler extends SimpleChannelInboundHandler<Object> {
     private FullHttpRequest request;
     private EntityDao dao;
-    private NodeService nodeService;
+    private INodeService nodeService;
     private Set<String> topology;
     private int currentPort;
     private Scheduler scheduler;
@@ -36,7 +37,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
         this.dao = dao;
         this.topology = topology;
         this.scheduler = scheduler;
-        nodeService = new NodeService(scheduler); //fixme: тестовый вариант
+        nodeService = new NettyNodeService(scheduler);
     }
 
     @Override
@@ -114,13 +115,21 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                                 }
                             }
 
-                            /* Редирект PUT реквеста, чтобы не писать свой в NodeService :) */
-                            ArrayList<FullHttpResponse> responses = nodeService.upsert(request, subSet);
+                            /* Оставлю закомментированным, чтобы не забывать, что такой подход не очень эффективен
+                            * Здесь был редирект
+                            * ArrayList<FullHttpResponse> responses = nodeService.upsert(request, subSet);
+                            */
+                            ByteBuf buffer = (request).content().retain();
+                            byte[] bytes0 = new byte[buffer.readableBytes()];
+                            while (buffer.isReadable()) {
+                                bytes0[buffer.readerIndex()] = buffer.readByte();
+                            }
+                            ArrayList<FullHttpResponse> responses = nodeService.upsert(key, bytes0, subSet);
 
                             /* Кладем данные на текущую ноду, если она содержится в выборке*/
                             if (isContained) {
                                 nodeProduce(uri, ctx, (key1, ctx1, ack, from) -> {
-                                    ByteBuf buf = request.content();
+                                    ByteBuf buf = request.content().resetReaderIndex();
                                     byte[] bytes = new byte[buf.readableBytes()];
                                     while (buf.isReadable()) {
                                         bytes[buf.readerIndex()] = buf.readByte();
@@ -180,7 +189,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                         break;
                     case "PUT":
                         nodeProduce(uri, ctx, (key, ctx0, ack, from) -> {
-                            ByteBuf buf = request.content();
+                            ByteBuf buf = request.content().resetReaderIndex();
                             byte[] bytes = new byte[buf.readableBytes()];
                             while (buf.isReadable()) {
                                 bytes[buf.readerIndex()] = buf.readByte();

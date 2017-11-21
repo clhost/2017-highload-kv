@@ -11,7 +11,5 @@ public interface INodeService {
     ArrayList<FullHttpResponse> delete(@NotNull final String key, @NotNull final Set<String> nodes);
     ArrayList<FullHttpResponse> upsert(@NotNull final String key,
                                        @NotNull final byte[] value, @NotNull final Set<String> nodes);
-    ArrayList<FullHttpResponse> upsert(@NotNull final FullHttpRequest redirectedRequest,
-                                       @NotNull final Set<String> nodes);
     ArrayList<FullHttpResponse> get(@NotNull final String key, @NotNull final Set<String> nodes);
 }

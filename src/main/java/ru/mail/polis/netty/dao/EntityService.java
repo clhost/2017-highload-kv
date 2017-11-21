@@ -7,6 +7,7 @@ import ru.mail.polis.Files;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 public class EntityService implements EntityDao {
     private Logger logger = LogManager.getLogger(EntityService.class);

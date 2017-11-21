@@ -33,9 +33,14 @@ public class Scheduler {
         }
     }
 
-    public synchronized void check() { //fixme: получается синхронно
-        checkDelete();
-        checkPut();
+    public synchronized void check() {
+        /*
+        * Позже можно реализовать так, чтобы взаимоисключающие PUT и DELETE не выполнялись
+        * */
+        //if (!(deletionSet.isEmpty() | putSet.isEmpty())) {
+            checkDelete();
+            checkPut();
+        //}
     }
 
     private void checkDelete() {
@@ -117,7 +122,7 @@ public class Scheduler {
         }
     }
 
-    public synchronized void restoreState() { // сейчас DELETE only
+    public synchronized void restoreState() {
         try (BufferedReader reader = new BufferedReader(new FileReader(schedulePath))) {
             String line = reader.readLine();
             if (!(line == null)) {

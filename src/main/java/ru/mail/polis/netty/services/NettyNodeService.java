@@ -1,6 +1,7 @@
 package ru.mail.polis.netty.services;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -10,25 +11,24 @@ import io.netty.handler.codec.http.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-import ru.mail.polis.netty.utils.UriDecoder;
 
 import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 @SuppressWarnings("FieldCanBeLocal")
-public class NodeService implements INodeService {
-    private Logger logger = LogManager.getLogger(NodeService.class);
+public class NettyNodeService implements INodeService {
+    private Logger logger = LogManager.getLogger(NettyNodeService.class);
     private ArrayList<FullHttpResponse> preparedResult = new ArrayList<>();
     private Connector connector;
     private Scheduler scheduler;
 
-    public NodeService(Scheduler scheduler) {
+    public NettyNodeService(Scheduler scheduler) {
         connector = new Connector(this);
         this.scheduler = scheduler;
     }
@@ -62,7 +62,7 @@ public class NodeService implements INodeService {
                                               @NotNull byte[] value, @NotNull final Set<String> nodes) {
         preparedResult.clear();
         for (String node : nodes) {
-            HttpRequest request = null;
+            FullHttpRequest request = null;
             try {
                 URI uri = new URI(node);
                 String host = uri.getHost();
@@ -70,35 +70,13 @@ public class NodeService implements INodeService {
 
                 // prepare request
                 URI requestUri = new URI(node + "/v0/node?id=" + key);
-                request = buildBasicRequest(HttpMethod.PUT, requestUri);
+                request = (FullHttpRequest) buildBasicRequest(HttpMethod.PUT, requestUri);
+                request.content().writeBytes(value);
+                request.headers().set(HttpHeaderNames.CONTENT_LENGTH, value.length);
 
                 connector.connect(host, port, request);
             } catch (URISyntaxException | ConnectException e) {
                 scheduler.save(request);
-                preparedResult.add(buildResponse504());
-                connector.shutdownGracefully();
-            }
-        }
-        return preparedResult;
-    }
-
-    @Override
-    public ArrayList<FullHttpResponse> upsert(@NotNull FullHttpRequest redirectedRequest,
-                                              @NotNull final Set<String> nodes) {
-        preparedResult.clear();
-        for (String node : nodes) {
-            try {
-                URI uri = new URI(node);
-                String host = uri.getHost();
-                int port = uri.getPort();
-
-                redirectedRequest.setUri(node + redirectedRequest.uri()
-                                        .replace("entity", "node"));
-                System.out.println(redirectedRequest.uri());
-
-                connector.connect(host, port, redirectedRequest.retain());
-            } catch (URISyntaxException | ConnectException e) {
-                scheduler.save(redirectedRequest);
                 preparedResult.add(buildResponse504());
                 connector.shutdownGracefully();
             }
@@ -160,10 +138,10 @@ public class NodeService implements INodeService {
     class Connector {
         private Bootstrap b;
         private EventLoopGroup group;
-        private final NodeService instance;
+        private final NettyNodeService instance;
         private ChannelFuture cf;
 
-        Connector(NodeService instance) {
+        Connector(NettyNodeService instance) {
             this.instance = instance;
         }
 
@@ -185,7 +163,7 @@ public class NodeService implements INodeService {
 
                                 pipeline.addLast(new HttpClientCodec());
                                 pipeline.addLast(new HttpObjectAggregator(1024 * 512));
-                                pipeline.addLast(new NodeServiceHandler(instance));
+                                pipeline.addLast(new NettyNodeServiceHandler(instance));
                             }
                         })
                         .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 500);
