@@ -17,7 +17,8 @@ public class NettyHttpServerInitializer extends ChannelInitializer<SocketChannel
     private Scheduler scheduler;
     private TTLSaver ttlSaver;
 
-    NettyHttpServerInitializer(EntityDao dao, Set<String> topology, int port, Scheduler scheduler, TTLSaver ttlSaver) {
+    NettyHttpServerInitializer(EntityDao dao, Set<String> topology, int port,
+                               Scheduler scheduler, TTLSaver ttlSaver) {
         this.port = port;
         this.topology = topology;
         this.dao = dao;
@@ -34,6 +35,6 @@ public class NettyHttpServerInitializer extends ChannelInitializer<SocketChannel
 
         pipeline.addLast(new HttpServerCodec());
         pipeline.addLast(new HttpObjectAggregator(1024*512));
-        pipeline.addLast(new HttpHandler(dao, topology, port, scheduler, ttlSaver));
+        pipeline.addLast(new HttpHandler(topology, port, scheduler, ttlSaver, dao));
     }
 }

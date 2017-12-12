@@ -3,7 +3,11 @@ package ru.mail.polis.netty.services.schedule;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.*;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.conn.HttpHostConnectException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import ru.mail.polis.Files;
 import ru.mail.polis.netty.utils.UriDecoder;
 
@@ -18,6 +22,8 @@ public class Scheduler {
     private String filesPath;
     private Set<HttpRequest> deletionSet = new HashSet<>();
     private Set<PutPair> putSet = new HashSet<>();
+
+    private Logger logger = LogManager.getLogger(Scheduler.class);
 
     public Scheduler(String workDir) {
         this.schedulePath = workDir + "/schedule.txt";
@@ -66,6 +72,8 @@ public class Scheduler {
                 if (code == 201) {
                     iterator.remove(); // fixme: копию файла оставлять на этой реплике или нет?
                 }
+            } catch (HttpHostConnectException h) {
+                logger.warn("Connection refused to :" + pair.request.uri());
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -1,15 +1,11 @@
 package ru.mail.polis.netty.services.ttl;
 
-import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import ru.mail.polis.netty.services.schedule.Scheduler;
 import ru.mail.polis.netty.utils.UriDecoder;
 
 import java.io.*;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -23,14 +19,12 @@ public class TTLSaver {
      * Long - its time to live
      */
     private ConcurrentHashMap<String, Long> ttlmap = new ConcurrentHashMap<>();
-    private String filesPath;
     private String ttlDataPath;
     private Logger logger = LogManager.getLogger(TTLSaver.class);
 
 
     public TTLSaver(String workDir) {
         this.ttlDataPath = workDir + "/" + "ttl.txt";
-        this.filesPath = workDir;
         File file = new File(ttlDataPath);
         if (!file.exists()) {
             try {
@@ -59,8 +53,7 @@ public class TTLSaver {
                     logger.error("Time-expired.");
                 } else {
                     if (!ttlmap.containsKey(fileName)) {
-                        System.out.println("saved: " + fileName);
-
+                        System.out.println("TTL Save file: " + fileName);
                         saveState(fileName, dateTime);
                         ttlmap.put(fileName, dateTime);
                     }
@@ -75,8 +68,8 @@ public class TTLSaver {
         return ttlmap;
     }
 
-    void remove(String filePath) {
-        System.out.println("removed: " + filePath);
+    synchronized void remove(String filePath) {
+        System.out.println("TTL Remove file: " + filePath);
         ttlmap.remove(filePath);
     }
 
@@ -99,5 +92,9 @@ public class TTLSaver {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void close() {
+        ttlmap = null;
     }
 }

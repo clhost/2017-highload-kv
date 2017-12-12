@@ -12,8 +12,8 @@ public class TTLWatcher extends Thread {
     private TTLSaver ttlSaver;
 
     public TTLWatcher(EntityDao dao, TTLSaver ttlSaver) {
-        this.dao = dao;
         this.ttlSaver = ttlSaver;
+        this.dao = dao;
     }
 
     @Override
@@ -22,20 +22,27 @@ public class TTLWatcher extends Thread {
             long currentTime = System.currentTimeMillis();
             ConcurrentHashMap<String, Long> ttlmap = ttlSaver.getTtlmap();
 
+            if (ttlmap == null) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+
             ArrayList<String> willDelete = new ArrayList<>();
 
             // сбор имен объектов на удаление
-            for (Map.Entry<String, Long> entry : ttlmap.entrySet()) {
-                if (entry.getValue() <= currentTime) {
-                    String fileName = entry.getKey();
-                    willDelete.add(fileName);
+            if (!ttlmap.isEmpty()) {
+                for (Map.Entry<String, Long> entry : ttlmap.entrySet()) {
+                    if (entry.getValue() <= currentTime) {
+                        String fileName = entry.getKey();
+                        willDelete.add(fileName);
+                    }
                 }
-            }
 
-            // удаление объектов
-            for (String fileName : willDelete) {
-                ttlSaver.remove(fileName);
-                dao.delete(fileName);
+                // удаление объектов
+                for (String fileName : willDelete) {
+                    ttlSaver.remove(fileName);
+                    dao.delete(fileName);
+                }
             }
         }
     }

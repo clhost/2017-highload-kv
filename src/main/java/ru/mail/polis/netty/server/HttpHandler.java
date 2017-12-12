@@ -17,8 +17,6 @@ import ru.mail.polis.netty.services.ttl.TTLSaver;
 import ru.mail.polis.netty.utils.SetHelper;
 import ru.mail.polis.netty.utils.UriDecoder;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
@@ -26,20 +24,24 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 @ChannelHandler.Sharable
 public class HttpHandler extends SimpleChannelInboundHandler<Object> {
     private FullHttpRequest request;
-    private EntityDao dao;
     private INodeService nodeService;
     private Set<String> topology;
     private int currentPort;
     private Scheduler scheduler;
     private TTLSaver ttlSaver;
+    private EntityDao dao;
     private Logger logger = LogManager.getLogger(HttpHandler.class);
 
-    HttpHandler(EntityDao dao, Set<String> topology, int port, Scheduler scheduler, TTLSaver ttlSaver) {
+    HttpHandler(@NotNull Set<String> topology,
+                final int port,
+                @NotNull final Scheduler scheduler,
+                @NotNull final TTLSaver ttlSaver,
+                @NotNull final EntityDao dao) {
         this.currentPort = port;
-        this.dao = dao;
         this.topology = topology;
         this.scheduler = scheduler;
         this.ttlSaver = ttlSaver;
+        this.dao = dao;
         nodeService = new NettyNodeService(scheduler);
     }
 
@@ -93,7 +95,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                                 nodeProduce(uri, ctx, (key1, ctx1, ack, from) -> {
                                     byte[] bytes = dao.get(key1);
                                     if (bytes == null) {
-                                        responses.add(buildResponse(HttpResponseStatus.NOT_FOUND, "Not Found".getBytes()));
+                                        responses.add(
+                                                buildResponse(HttpResponseStatus.NOT_FOUND,
+                                                "Not Found".getBytes()));
                                     } else {
                                         responses.add(buildResponse(HttpResponseStatus.OK, bytes));
                                     }
@@ -103,6 +107,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                             checkAndRespond(responses, ack0, ctx0);
                         });
                         break;
+
                     case "PUT" :
                         entityProduce(uri, ctx, (key, ctx0, ack0, from0) -> {
                             int serverPoint = findPosInitialNode(key);
@@ -120,19 +125,19 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                             }
 
                             /* Оставлю закомментированным, чтобы не забывать, что такой подход не очень эффективен
-                            * Здесь был редирект
-                            * ArrayList<FullHttpResponse> responses = nodeService.upsert(request, subSet);
+                            *  Здесь был редирект
+                            *  ArrayList<FullHttpResponse> responses = nodeService.upsert(request, subSet);
                             */
                             ttlSaver.accept(request);
 
-                            ByteBuf buffer = request.content().retain();
+                            ByteBuf buffer = request.content();//.retain(); fixme убрал retain
                             byte[] bytes0 = new byte[buffer.readableBytes()];
                             while (buffer.isReadable()) {
                                 bytes0[buffer.readerIndex()] = buffer.readByte();
                             }
                             ArrayList<FullHttpResponse> responses = nodeService.upsert(key, bytes0, subSet, request.headers());
 
-                            /* Кладем данные на текущую ноду, если она содержится в выборке*/
+                            /* Кладем данные на текущую ноду, если она содержится в выборке */
                             if (isContained) {
                                 nodeProduce(uri, ctx, (key1, ctx1, ack, from) -> {
                                     ByteBuf buf = request.content().resetReaderIndex();
@@ -145,9 +150,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                                 });
                             }
 
+                            //request.release(); //fixme добавил release
                             checkAndRespond(responses, ack0, ctx0);
                         });
                         break;
+
                     case "DELETE" :
                         entityProduce(uri, ctx, (key, ctx0, ack0, from0) -> {
                             int serverPoint = findPosInitialNode(key);
@@ -168,6 +175,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                             /* Удаляем данные из текущей ноды, если она содержится в выборке*/
                             if (isContained) {
                                 nodeProduce(uri, ctx, (key1, ctx1, ack, from) -> {
+                                    //dao.delete(key1);
                                     dao.delete(key1);
                                     responses.add(buildResponse(HttpResponseStatus.ACCEPTED, "Deleted".getBytes()));
                                 });
@@ -185,6 +193,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                 switch (httpMethodName) {
                     case "GET":
                         nodeProduce(uri, ctx, (key, ctx0, ack ,from) -> {
+                            //byte[] bytes = dao.get(key);
                             byte[] bytes = dao.get(key);
                             if (bytes == null) {
                                 writeResponse(HttpResponseStatus.NOT_FOUND, "404".getBytes(), ctx0);
@@ -193,18 +202,23 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                             }
                         });
                         break;
+
                     case "PUT":
-                        ttlSaver.accept(request);
+                        if (request.headers().get("Expires") != null) {
+                            ttlSaver.accept(request);
+                        }
                         nodeProduce(uri, ctx, (key, ctx0, ack, from) -> {
                             ByteBuf buf = request.content().resetReaderIndex();
                             byte[] bytes = new byte[buf.readableBytes()];
                             while (buf.isReadable()) {
                                 bytes[buf.readerIndex()] = buf.readByte();
                             }
+                            //buf.release();
                             dao.upsert(key, bytes);
                             writeResponse(HttpResponseStatus.CREATED, "Created".getBytes(), ctx0);
                         });
                         break;
+
                     case "DELETE":
                         nodeProduce(uri, ctx, (key, ctx0, ack, from) -> {
                             dao.delete(key);

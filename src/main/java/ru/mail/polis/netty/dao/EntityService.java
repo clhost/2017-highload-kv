@@ -47,4 +47,34 @@ public class EntityService implements EntityDao {
         }
         return bytes;
     }
+
+    @Override
+    public void delete(@NotNull String key, @NotNull String path) {
+        try {
+            Files.deleteFileByName(path, key);
+        } catch (IOException e) {
+            logger.error("Can't delete file or file doesn't exist.");
+        }
+    }
+
+    @Override
+    public void upsert(@NotNull String key, @NotNull byte[] value, @NotNull String path) {
+        try {
+            Files.createFileAndWriteValue(path, key, value);
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.error("Can't create or rewrite file.");
+        }
+    }
+
+    @Override
+    public byte[] get(@NotNull String key, @NotNull String path) {
+        byte[] bytes = null;
+        try {
+            bytes = Files.getValueFromFile(path, key);
+        } catch (IOException e) {
+            logger.error("File " + key + " doesn't exist.");
+        }
+        return bytes;
+    }
 }

@@ -37,6 +37,8 @@ public class NettyHttpServer implements KVService{
     private TTLSaver ttlSaver;
     private TTLWatcher ttlWatcher;
 
+    private static int ID = 0;
+
     public NettyHttpServer(String workDir, int port, EntityDao dao, Set<String> topology) {
         this.topology = topology;
         this.dao = dao;
@@ -46,6 +48,7 @@ public class NettyHttpServer implements KVService{
         ttlSaver = new TTLSaver(workDir + "/" +  String.valueOf(port));
         ttlWatcher = new TTLWatcher(dao, ttlSaver);
         ttlWatcher.setDaemon(true);
+        ttlWatcher.setName("TTLWatcher " + ++ID);
         ttlWatcher.start();
 
         bossGroup = new NioEventLoopGroup();
@@ -95,6 +98,7 @@ public class NettyHttpServer implements KVService{
             bossGroup.shutdownGracefully();
             workersGroup.shutdownGracefully();
             cf.channel().closeFuture().sync();
+            ttlSaver.close();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

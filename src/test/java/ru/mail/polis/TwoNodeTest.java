@@ -1,9 +1,6 @@
 package ru.mail.polis;
 
-import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.fluent.Request;
-import org.apache.http.message.BasicHeader;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -14,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedHashSet;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -27,7 +23,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class TwoNodeTest extends ClusterTestBase {
     @Rule
-    public final Timeout globalTimeout = Timeout.seconds(15); // was increased for TTL
+    public final Timeout globalTimeout = Timeout.seconds(5);
     private int port0;
     private int port1;
     private File data0;
@@ -55,36 +51,6 @@ public class TwoNodeTest extends ClusterTestBase {
         storage1.stop();
         Files.recursiveDelete(data1);
         endpoints = Collections.emptySet();
-    }
-
-    @Test
-    public void ttltest() throws Exception {
-        // should increase globalTimeout
-        upsertWithTtl(0, "1213", randomValue(), 2, 2).getStatusLine().getStatusCode();
-        Thread.sleep(10 * 1000);
-        assertEquals(404, get(0, "1213", 2, 2).getStatusLine().getStatusCode());
-    }
-
-    @Test
-    public void ttltestWithStopNode() throws Exception {
-        // should increase globalTimeout
-        upsertWithTtl(0, "1213", randomValue(), 2, 2).getStatusLine().getStatusCode();
-        storage1.stop();
-        Thread.sleep(2 * 1000);
-        storage1 = KVServiceFactory.create(port1, data1, endpoints);
-        storage1.start();
-        Thread.sleep(10 * 1000);
-        assertEquals(404, get(0, "1213", 2, 2).getStatusLine().getStatusCode());
-    }
-
-    @Test
-    public void stressTest() throws Exception {
-        final int count = 1;
-        storage1.stop();
-        for (int i = 0; i < count; i++) {
-            assertEquals(201, upsert(0, String.valueOf(i), randomValue(), 1, 2)
-                                            .getStatusLine().getStatusCode());
-        }
     }
 
     @Test

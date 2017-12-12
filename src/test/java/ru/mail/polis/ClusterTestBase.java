@@ -60,10 +60,11 @@ abstract class ClusterTestBase extends TestBase {
             @NotNull final String key,
             @NotNull final byte[] data,
             final int ack,
-            final int from) throws IOException {
+            final int from,
+            final long timeMillis) throws IOException {
         return Request.Put(url(node, key, ack, from)).bodyByteArray(data)
                 .addHeader(new BasicHeader(HttpHeaders.EXPIRES,
-                           new Date(System.currentTimeMillis() + 5 * 1000).toString()))
+                           new Date(System.currentTimeMillis() + timeMillis).toString()))
                 .execute().returnResponse();
     }
 }

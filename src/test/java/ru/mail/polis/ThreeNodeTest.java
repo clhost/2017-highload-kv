@@ -24,7 +24,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class ThreeNodeTest extends ClusterTestBase {
     @Rule
-    public final Timeout globalTimeout = Timeout.seconds(25); // was increased for TTL
+    public final Timeout globalTimeout = Timeout.seconds(10);
     private int port0;
     private int port1;
     private int port2;
@@ -342,24 +342,5 @@ public class ThreeNodeTest extends ClusterTestBase {
 
         // Check
         assertEquals(2, copies);
-    }
-
-    @Test
-    public void ttltest() throws Exception {
-        for (int i = 0; i < 10; i++) {
-            if (i != 9) {
-                upsertWithTtl(0, "1213" + i, randomValue(), 3, 3).getStatusLine().getStatusCode();
-            }
-            upsertWithTtl(1, "1214" + i, randomValue(), 3, 3).getStatusLine().getStatusCode();
-            upsertWithTtl(2, "1215" + i, randomValue(), 3, 3).getStatusLine().getStatusCode();
-
-            if (i == 8) {
-                storage0.stop();
-            }
-        }
-        storage0 = KVServiceFactory.create(port0, data0, endpoints);
-        storage0.start();
-        Thread.sleep(10 * 1000);
-        assertEquals(404, get(0, "12139", 3, 3).getStatusLine().getStatusCode());
     }
 }

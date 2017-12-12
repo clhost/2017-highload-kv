@@ -38,6 +38,14 @@ public final class Files {
                                                @NotNull final byte[] value) throws IOException {
         File file = new File(path + File.separator + name);
 
+        //System.out.println(file.getAbsolutePath());
+        file.getParentFile().mkdirs();
+        try {
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         try (FileOutputStream fileOutputStream = new FileOutputStream(file.getAbsolutePath())) {
             fileOutputStream.write(value);
             fileOutputStream.flush();

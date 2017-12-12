@@ -67,34 +67,6 @@ public class SingleNodeTest extends TestBase {
     }
 
     @Test
-    public void ttltest() throws Exception {
-        // should increase globalTimeout
-        Request
-                .Put(url("1213"))
-                .addHeader(new BasicHeader(HttpHeaders.EXPIRES,
-                           new Date(System.currentTimeMillis() + 3 * 1000).toString()))
-                .bodyByteArray(randomValue())
-                .execute()
-                .returnResponse()
-                .getStatusLine()
-                .getStatusCode();
-        Request
-                .Put(url("1214"))
-                .addHeader(new BasicHeader(HttpHeaders.EXPIRES,
-                           new Date(System.currentTimeMillis() + 3 * 1000).toString()))
-                .bodyByteArray(randomValue())
-                .execute()
-                .returnResponse()
-                .getStatusLine()
-                .getStatusCode();
-        upsert();
-        Thread.sleep(5 * 1000);
-
-        assertEquals(404, get("1213").getStatusLine().getStatusCode());
-        assertEquals(404, get("1214").getStatusLine().getStatusCode());
-    }
-
-    @Test
     public void emptyKey() throws Exception {
         assertEquals(400, get("").getStatusLine().getStatusCode());
         assertEquals(400, delete("").getStatusLine().getStatusCode());

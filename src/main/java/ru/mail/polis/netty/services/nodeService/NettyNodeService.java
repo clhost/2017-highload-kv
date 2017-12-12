@@ -78,6 +78,7 @@ public class NettyNodeService implements INodeService {
 
                 connector.connect(host, port, request);
             } catch (URISyntaxException | ConnectException e) {
+                logger.warn("Probably, happened connect refused.");
                 scheduler.save(request);
                 preparedResult.add(buildResponse504());
                 connector.shutdownGracefully();
