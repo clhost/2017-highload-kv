@@ -1,3 +1,4 @@
+<<<<<<< HEAD:_gitignore
 # Ignore everything
 *
 
@@ -13,3 +14,22 @@
 
 # ...even if they are in subdirectories
 !*/
+=======
+# Ignore everything
+*
+
+# But not Java files...
+!.gitignore
+!*.java
+
+# And CI
+!.travis.yml
+!build.gradle.kts
+!gradlew
+!LICENSE
+!README.md
+!settings.gradle
+
+# ...even if they are in subdirectories
+!*/
+>>>>>>> upstream/master:.gitignore

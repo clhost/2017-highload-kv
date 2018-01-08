@@ -23,7 +23,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class TwoNodeTest extends ClusterTestBase {
     @Rule
-    public final Timeout globalTimeout = Timeout.seconds(5);
+    public final Timeout globalTimeout = Timeout.seconds(3);
     private int port0;
     private int port1;
     private File data0;
@@ -123,7 +123,6 @@ public class TwoNodeTest extends ClusterTestBase {
         response = get(1, key, 1, 2);
         assertEquals(404, response.getStatusLine().getStatusCode());
     }
-
 
     @Test
     public void missedWrite() throws Exception {
