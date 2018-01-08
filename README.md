@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 2017-highload-kv
 Курсовой проект 2017 года [курса](https://polis.mail.ru/curriculum/program/discipline/50/) "Проектирование высоконагруженных систем" в [Технополис](https://polis.mail.ru).
 
@@ -320,5 +319,4 @@ Transfer/sec:    360.95KB
 * Нагрузочное тестирование при помощи [Y!CSB](https://github.com/brianfrankcooper/YCSB) или [Yandex.Tank](https://overload.yandex.net)
 * Предложите своё
 
->>>>>>> upstream/master
 Если решите реализовать что-то бонусное, обязательно сначала обсудите это с преподавателем.
