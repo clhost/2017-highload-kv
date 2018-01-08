@@ -112,7 +112,20 @@ public class Scheduler {
         }
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(schedulePath, true))) {
-            writer.write(request.method() + " " + request.uri() + " " + filePath + "/" + fileName);
+            StringBuilder builder = new StringBuilder();
+            builder.append(request.method()).
+                    append(" ").
+                    append(request.uri()).
+                    append(" ").
+                    append(filePath).
+                    append("/").
+                    append(fileName);
+
+            for (Map.Entry<String, String> entry : request.headers()) {
+                builder.append(" ").append(entry.getKey()).append(" ").append(entry.getValue());
+            }
+
+            writer.write(builder.toString());
             writer.newLine();
         } catch (IOException e) {
             e.printStackTrace();
@@ -121,7 +134,16 @@ public class Scheduler {
 
     private void saveDelRequest(HttpRequest request) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(schedulePath, true))) {
-            writer.write(request.method() + " " + request.uri());
+            StringBuilder builder = new StringBuilder();
+            builder.append(request.method()).
+                    append(" ").
+                    append(request.uri());
+
+            for (Map.Entry<String, String> entry : request.headers()) {
+                builder.append(" ").append(entry.getKey()).append(" ").append(entry.getValue());
+            }
+
+            writer.write(builder.toString());
             writer.newLine();
         } catch (IOException e) {
             e.printStackTrace();
@@ -134,10 +156,26 @@ public class Scheduler {
             if (!(line == null)) {
                 String[] params = line.split(" ");
                 if (params[0].equals("DELETE")) {
-                    deletionSet.add(buildBasicRequest(HttpMethod.DELETE, new URI(params[1])));
+                    HttpRequest request = buildBasicRequest(HttpMethod.DELETE, new URI(params[1]));
+
+                    int i = 2;
+                    while (i <= params.length - 2) {
+                        request.headers().set(params[i], params[i + 1]);
+                        i += 2;
+                    }
+
+                    deletionSet.add(request);
                 }
                 if (params[0].equals("PUT")) {
-                    putSet.add(new PutPair(buildBasicRequest(HttpMethod.PUT, new URI(params[1])),
+                    HttpRequest request = buildBasicRequest(HttpMethod.PUT, new URI(params[1]));
+
+                    int i = 3;
+                    while (i <= params.length - 2) {
+                        request.headers().set(params[i], params[i + 1]);
+                        i += 2;
+                    }
+
+                    putSet.add(new PutPair(request,
                                            params[2]));
                 }
             }
