@@ -1,4 +1,4 @@
-package ru.mail.polis.netty.services.nodeService;
+package ru.mail.polis.netty.services.node_service;
 
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
