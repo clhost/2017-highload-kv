@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import ru.mail.polis.KVService;
 import ru.mail.polis.netty.dao.EntityDao;
 import ru.mail.polis.netty.services.schedule.Scheduler;
+import ru.mail.polis.netty.services.server_side_processing.Acceptor;
 import ru.mail.polis.netty.services.ttl.TTLSaver;
 import ru.mail.polis.netty.services.ttl.TTLWatcher;
 
@@ -36,8 +37,9 @@ public class NettyHttpServer implements KVService{
     private Scheduler scheduler;
     private TTLSaver ttlSaver;
     private TTLWatcher ttlWatcher;
+    private Acceptor acceptor;
 
-    private static int ID = 0;
+    private static int TTLWatcherID = 0;
 
     public NettyHttpServer(String workDir, int port, EntityDao dao, Set<String> topology) {
         this.topology = topology;
@@ -45,11 +47,16 @@ public class NettyHttpServer implements KVService{
         this.port = port;
 
         scheduler = new Scheduler(workDir + "/" +  String.valueOf(port));
+
         ttlSaver = new TTLSaver(workDir + "/" +  String.valueOf(port));
+
         ttlWatcher = new TTLWatcher(dao, ttlSaver);
         ttlWatcher.setDaemon(true);
-        ttlWatcher.setName("TTLWatcher " + ++ID);
+        ttlWatcher.setName("TTLWatcher " + ++TTLWatcherID);
         ttlWatcher.start();
+
+        acceptor = new Acceptor();
+        acceptor.start();
 
         bossGroup = new NioEventLoopGroup();
         workersGroup = new NioEventLoopGroup();

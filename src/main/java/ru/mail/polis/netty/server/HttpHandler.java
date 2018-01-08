@@ -10,8 +10,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import ru.mail.polis.netty.dao.EntityDao;
-import ru.mail.polis.netty.services.nodeService.INodeService;
-import ru.mail.polis.netty.services.nodeService.NettyNodeService;
+import ru.mail.polis.netty.services.node_service.ApacheNodeService;
+import ru.mail.polis.netty.services.node_service.INodeService;
 import ru.mail.polis.netty.services.schedule.Scheduler;
 import ru.mail.polis.netty.services.ttl.TTLSaver;
 import ru.mail.polis.netty.utils.SetHelper;
@@ -42,7 +42,9 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
         this.scheduler = scheduler;
         this.ttlSaver = ttlSaver;
         this.dao = dao;
-        nodeService = new NettyNodeService(scheduler);
+
+        //node_service = new NettyNodeService(scheduler);
+        nodeService = new ApacheNodeService(scheduler);
     }
 
     @Override
@@ -88,7 +90,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                                 }
                             }
 
-                            ArrayList<FullHttpResponse> responses = nodeService.get(key, subSet);
+                            ArrayList<FullHttpResponse> responses = nodeService.get(key, subSet, request.headers());
 
                             /* Достаем данные из текущей ноды, если она содержится в выборке*/
                             if (isContained) {
@@ -126,9 +128,11 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
 
                             /* Оставлю закомментированным, чтобы не забывать, что такой подход не очень эффективен
                             *  Здесь был редирект
-                            *  ArrayList<FullHttpResponse> responses = nodeService.upsert(request, subSet);
+                            *  ArrayList<FullHttpResponse> responses = node_service.upsert(request, subSet);
                             */
-                            ttlSaver.accept(request);
+                            if (request.headers().get("Expires") != null) {
+                                ttlSaver.accept(request);
+                            }
 
                             ByteBuf buffer = request.content();//.retain(); fixme убрал retain
                             byte[] bytes0 = new byte[buffer.readableBytes()];
@@ -149,8 +153,6 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                                     responses.add(buildResponse(HttpResponseStatus.CREATED, "Created".getBytes()));
                                 });
                             }
-
-                            //request.release(); //fixme добавил release
                             checkAndRespond(responses, ack0, ctx0);
                         });
                         break;
@@ -170,7 +172,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
                                 }
                             }
 
-                            ArrayList<FullHttpResponse> responses = nodeService.delete(key, subSet);
+                            ArrayList<FullHttpResponse> responses = nodeService.delete(key, subSet, request.headers());
 
                             /* Удаляем данные из текущей ноды, если она содержится в выборке*/
                             if (isContained) {
@@ -270,6 +272,7 @@ public class HttpHandler extends SimpleChannelInboundHandler<Object> {
     interface Producer {
         void produce(String key, ChannelHandlerContext ctx, Integer ack, Integer from);
     }
+
 
 
     private void writeResponse(final @NotNull HttpResponseStatus status,
