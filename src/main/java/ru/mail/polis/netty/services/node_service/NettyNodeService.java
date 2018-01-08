@@ -33,7 +33,9 @@ public class NettyNodeService implements INodeService {
     }
 
     @Override
-    public ArrayList<FullHttpResponse> delete(@NotNull String key, @NotNull final Set<String> nodes) {
+    public ArrayList<FullHttpResponse> delete(@NotNull String key,
+                                              @NotNull final Set<String> nodes,
+                                              @NotNull final HttpHeaders headers) {
         preparedResult.clear();
         for (String node : nodes) {
             HttpRequest request = null;
@@ -58,7 +60,8 @@ public class NettyNodeService implements INodeService {
 
     @Override
     public ArrayList<FullHttpResponse> upsert(@NotNull String key,
-                                              @NotNull byte[] value, @NotNull final Set<String> nodes,
+                                              @NotNull byte[] value,
+                                              @NotNull final Set<String> nodes,
                                               @NotNull HttpHeaders headers) {
         preparedResult.clear();
         for (String node : nodes) {
@@ -78,7 +81,7 @@ public class NettyNodeService implements INodeService {
 
                 connector.connect(host, port, request);
             } catch (URISyntaxException | ConnectException e) {
-                logger.warn("Probably, happened connect refused.");
+                logger.warn("Probably, happened connect refused to : " + request.uri());
                 scheduler.save(request);
                 preparedResult.add(buildResponse504());
                 connector.shutdownGracefully();
@@ -88,7 +91,9 @@ public class NettyNodeService implements INodeService {
     }
 
     @Override
-    public ArrayList<FullHttpResponse> get(@NotNull String key, @NotNull final Set<String> nodes) {
+    public ArrayList<FullHttpResponse> get(@NotNull String key,
+                                           @NotNull final Set<String> nodes,
+                                           @NotNull final HttpHeaders headers) {
         preparedResult.clear();
         for (String node : nodes) {
             try {
