@@ -117,6 +117,7 @@ public class TTLTest extends ClusterTestBase {
             Thread.sleep(200);
         }
 
+        Thread.sleep(1000);
         assertEquals(404, get(0, "1213" + new Random().nextInt(9), 3, 3)
                 .getStatusLine()
                 .getStatusCode());
