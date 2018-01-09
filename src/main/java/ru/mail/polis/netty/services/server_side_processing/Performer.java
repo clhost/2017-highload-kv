@@ -674,7 +674,7 @@ class Performer {
             if (op2.getClass().equals(String.class)) {
                 op2 = Integer.parseInt((String) op2);
             }
-        } catch (ClassCastException e) {
+        } catch (NumberFormatException e) {
             // do nothing
         }
 

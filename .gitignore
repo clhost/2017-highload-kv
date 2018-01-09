@@ -5,11 +5,14 @@
 !.gitignore
 !.travis.yml
 !build.gradle
+!build.gradle.kts
 !gradlew
+!gradlew.bat
 !LICENSE
-!README.md
 !settings.gradle
 !*.java
-
+!src/main/resources/
+!*.md
+!*.lua
 # ...even if they are in subdirectories
 !*/
